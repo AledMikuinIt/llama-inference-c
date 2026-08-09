@@ -3,7 +3,7 @@
 A from-scratch implementation of Llama-style transformer inference in C,
 with a focus on **secure parsing** of the model file format.
 
-> Work in progress. Currently: model file header parsing + integrity validation.
+> Work in progress. Currently: memory map & weights loaded
 
 ## Why this project
 
@@ -18,7 +18,7 @@ vulnerabilities.
 - [x] Parse the model file header (`Config`: dim, n_layers, n_heads, vocab_size…)
 - [x] Compute the full expected weight layout, byte-for-byte
 - [x] **Overflow-safe file validation** (see below)
-- [ ] Memory-map and load the weights
+- [x] Memory-map and load the weights
 - [ ] matmul
 - [ ] attention + RoPE
 - [ ] text generation
