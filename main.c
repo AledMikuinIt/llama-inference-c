@@ -240,12 +240,24 @@ void matmul(float* output, float* input, float* weight, int input_size, int outp
 void compute_vector(TransformerWeights* w, Config* config, int offset) {
 
     float* token_pointer = w->token_embedding_table + (offset * config->dim);
-    float output[config->dim];
+    float query[config->dim];
+    float key[config->dim];
+    float value[config->dim];
 
-    matmul(output, token_pointer, w->wq, config->dim, config->dim);
+    matmul(query, token_pointer, w->wq, config->dim, config->dim);  // compute wq
+    matmul(key, token_pointer, w->wk, config->dim, config->dim);    // compute wk
+    matmul(value, token_pointer, w->wv, config->dim, config->dim);  // compute wv
 
-    for(int i = 0; i < config->dim; i++) {
-        printf("Output: %f\n", output[i]);
+    for(int i = 0; i < sizeof(query)/sizeof(float); i++) {
+        printf("Query output: %f\n", query[i]);
+    }
+
+    for(int i = 0; i < sizeof(key)/sizeof(float); i++) {
+        printf("Key output: %f\n", key[i]);
+    }
+
+    for(int i = 0; i < sizeof(value)/sizeof(float); i++) {
+        printf("Value output: %f\n", value[i]);
     }
 }
 
