@@ -216,9 +216,26 @@ void map_weights(float* weights, Config* config, TransformerWeights* w) {
     w->freq_cis_imag = weights_pointer;
     weights_pointer += (size_t)config->seq_len * (config->dim / config->n_heads) / 2;
     
-    printf("[DEBUG] Curseur final: %ld floats\n", weights_pointer - weights);
+    printf("[DEBUG] Final cursor position: %ld floats\n", weights_pointer - weights);
 
 }
+
+void matmul(float* output, float* input, float* weight, int input_size, int output_size) {
+
+    for(int i = 0; i < output_size; i++) {
+
+        float sum = 0;
+
+        for(int j = 0; j < input_size; j++) {
+
+            sum += weight[i * input_size + j] * input[j];
+        }
+
+        output[i] = sum;
+
+    }
+}
+
 
 int main() {
 
@@ -246,7 +263,14 @@ int main() {
     printf("sizeof Config: %zu\n", sizeof(Config));
 
 
-    map_weights(weights, &data, &w);
+   map_weights(weights, &data, &w);
+
+    float input[2] = {2, 3};        // test
+    float output[2];                // test
+
+    matmul(output, input, weights, 2, 2);
+    printf("[DEBUG] Output 1: %f\n", output[0]);    // test
+    printf("[DEBUG] Outpur 2: %f\n", output[1]);    // test
 
     return 0;
 }
