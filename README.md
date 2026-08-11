@@ -3,7 +3,7 @@
 A from-scratch implementation of Llama-style transformer inference in C,
 with a focus on **secure parsing** of the model file format.
 
-> Work in progress. Currently: matmul & verified test
+> Work in progress. Currently: attention interaction, softmax, wo, and KV-cache
 
 ## Why this project
 
