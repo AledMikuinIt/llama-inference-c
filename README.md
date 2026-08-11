@@ -3,7 +3,7 @@
 A from-scratch implementation of Llama-style transformer inference in C,
 with a focus on **secure parsing** of the model file format.
 
-> Work in progress. Currently: memory map & weights loaded
+> Work in progress. Currently: matmul & verified test
 
 ## Why this project
 
@@ -19,7 +19,7 @@ vulnerabilities.
 - [x] Compute the full expected weight layout, byte-for-byte
 - [x] **Overflow-safe file validation** (see below)
 - [x] Memory-map and load the weights
-- [ ] matmul
+- [x] matmul
 - [ ] attention + RoPE
 - [ ] text generation
 - [ ] int8/int4 quantization
