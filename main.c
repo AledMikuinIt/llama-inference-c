@@ -237,6 +237,19 @@ void matmul(float* output, float* input, float* weight, int input_size, int outp
 }
 
 
+void compute_vector(TransformerWeights* w, Config* config, int offset) {
+
+    float* token_pointer = w->token_embedding_table + (offset * config->dim);
+    float output[config->dim];
+
+    matmul(output, token_pointer, w->wq, config->dim, config->dim);
+
+    for(int i = 0; i < config->dim; i++) {
+        printf("Output: %f\n", output[i]);
+    }
+}
+
+
 int main() {
 
     Config data;
@@ -271,6 +284,8 @@ int main() {
     matmul(output, input, weights, 2, 2);
     printf("[DEBUG] Output 1: %f\n", output[0]);    // test
     printf("[DEBUG] Outpur 2: %f\n", output[1]);    // test
+
+    compute_vector(&w, &data, 1);
 
     return 0;
 }
