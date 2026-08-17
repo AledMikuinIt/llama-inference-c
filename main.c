@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,6 +6,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <math.h>
 
 
 typedef struct {
@@ -237,28 +239,62 @@ void matmul(float* output, float* input, float* weight, int input_size, int outp
 }
 
 
-void compute_vector(TransformerWeights* w, Config* config, int offset) {
 
-    float* token_pointer = w->token_embedding_table + (offset * config->dim);
+void forward(TransformerWeights* w, Config* config, int* tokens, int token_count) {
+
+
+    float key_cache[config->dim * token_count];
+    float value_cache[config->dim * token_count];
+
+    memset(key_cache, 0, sizeof(key_cache));
+    memset(value_cache, 0, sizeof(value_cache));
+
+
+    for(int i = 0; i < token_count; i++) {
+
+        float* token_embedding_pointer = w->token_embedding_table + tokens[i] * config->dim;
+        matmul(key_cache + i * config->dim, token_embedding_pointer, w->wk, config->dim, config->dim);
+        matmul(value_cache + i * config->dim, token_embedding_pointer, w->wv, config->dim, config->dim);
+    }
+
+
     float query[config->dim];
-    float key[config->dim];
-    float value[config->dim];
+    float* last_query_token = w->token_embedding_table + tokens[token_count - 1] * config->dim;
+    matmul(query, last_query_token, w->wq, config->dim, config->dim);
 
-    matmul(query, token_pointer, w->wq, config->dim, config->dim);  // compute wq
-    matmul(key, token_pointer, w->wk, config->dim, config->dim);    // compute wk
-    matmul(value, token_pointer, w->wv, config->dim, config->dim);  // compute wv
+    float scores[token_count];
 
-    for(int i = 0; i < sizeof(query)/sizeof(float); i++) {
-        printf("Query output: %f\n", query[i]);
+    for(int i = 0; i < token_count; i++) {
+        scores[i] = 0;
+        for(int j = 0; j < config->dim; j++) {
+            scores[i] += query[j] * key_cache[i * config->dim + j];
+        }
     }
 
-    for(int i = 0; i < sizeof(key)/sizeof(float); i++) {
-        printf("Key output: %f\n", key[i]);
+    float sum = 0;
+    for(int i = 0; i < token_count; i++) {
+        scores[i] = expf(scores[i]);
+        sum += scores[i];
+    }
+    
+    for(int i = 0; i < token_count; i++) {
+        scores[i] = scores[i] / sum;
+        printf("Score: %f\n", scores[i]); 
+
     }
 
-    for(int i = 0; i < sizeof(value)/sizeof(float); i++) {
-        printf("Value output: %f\n", value[i]);
+    float attention_output[config->dim];
+    for(int i = 0; i < config->dim; i++) {
+        attention_output[i] = 0;
+        for(int j = 0; j < token_count; j++) {
+            attention_output[i] += scores[j] * value_cache[j * config->dim + i];
+        }
     }
+
+    for(int i = 0; i < 5; i++) {
+        printf("Attnetion output: %f\n", attention_output[i]);
+    }
+    
 }
 
 
@@ -266,38 +302,15 @@ int main() {
 
     Config data;
     TransformerWeights w;
+
     float* weights_raw = load_model("stories15M.bin", &data);
-
-    printf("\n---Debug Weights Values---\n");
-    printf("Raw weight (still the file headers): %f\n", weights_raw[0]);
-
     float* weights = weights_raw + sizeof(Config)/sizeof(float);
 
-    printf("First real weight (after header offset) : %f\n", weights[0]);
+    map_weights(weights, &data, &w);
 
+    int tokens[3] = {306, 5169, 1002};
+    forward(&w, &data, tokens, 3);
 
-    printf("\n---Debug Info Values---\n");
-    printf("dim: %d\n", data.dim);
-    printf("hidden dim: %d\n", data.hidden_dim);
-    printf("layers: %d\n", data.n_layers);
-    printf("heads: %d\n", data.n_heads);
-    printf("kv heads: %d\n", data.n_kv_heads);
-    printf("vocab size: %d\n", data.vocab_size);
-    printf("sequence lenght: %d\n", data.seq_len);
-    
-    printf("sizeof Config: %zu\n", sizeof(Config));
-
-
-   map_weights(weights, &data, &w);
-
-    float input[2] = {2, 3};        // test
-    float output[2];                // test
-
-    matmul(output, input, weights, 2, 2);
-    printf("[DEBUG] Output 1: %f\n", output[0]);    // test
-    printf("[DEBUG] Outpur 2: %f\n", output[1]);    // test
-
-    compute_vector(&w, &data, 1);
 
     return 0;
 }
