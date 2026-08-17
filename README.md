@@ -3,7 +3,7 @@
 A from-scratch implementation of Llama-style transformer inference in C,
 with a focus on **secure parsing** of the model file format.
 
-> Work in progress. Currently: attention interaction, softmax, wo, and KV-cache
+> Work in progress. Currently: done attention interaction, softmax, wo, and KV-cache, next is multi head, RoPE, FFN (w1, w2, w3), and rms
 
 ## Why this project
 
@@ -20,7 +20,8 @@ vulnerabilities.
 - [x] **Overflow-safe file validation** (see below)
 - [x] Memory-map and load the weights
 - [x] matmul
-- [ ] attention + RoPE
+- [x] single head attention & KV cache, score
+- [ ] multi head attention + RoPE
 - [ ] text generation
 - [ ] int8/int4 quantization
 
@@ -44,7 +45,7 @@ so the validation itself can't be bypassed by the very overflow it guards agains
 
 ## Build & run
 
-    gcc -o main main.c
+    gcc -o main main.c -lm
     ./main
 
 Expects `stories15M.bin` (Karpathy's tiny Llama model) in the same directory.
